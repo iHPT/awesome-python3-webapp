@@ -7,11 +7,11 @@ Models for user, blog, coment.
 
 __author__ = 'hpt'
 
-import time, uuid
+import time, uuid, random
 from orm import Model, StringField, BooleanField, FloatField, TextField
 
 def next_id():
-    return '%015d%s000' % (int(time.time() * 1000), uuid.uuid4().hex)
+    return '%015d%s000' % (int(time.time() * 1000) + random.randint(1, 1000), uuid.uuid4().hex)
 
 class User(Model):
     __table__ = 'users'
@@ -23,6 +23,14 @@ class User(Model):
     name = StringField(ddl='VARCHAR(50)')
     image = StringField(ddl='VARCHAR(500)')
     created_at = FloatField(default=time.time)
+    def __init__(self, email, passwd, name, id=next_id(), admin=False, image='favicon.ico', created_at=time.time()):
+        self.id = id
+        self.email = email
+        self.passwd = passwd
+        self.admin = admin
+        self.name = name
+        self.image = image
+        self.created_at = created_at
 
 class Blog(Model):
     __table__ = 'blogs'

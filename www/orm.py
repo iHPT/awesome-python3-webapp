@@ -30,6 +30,7 @@ async def create_pool(loop, **kw):
     )
 
 async def select(sql, args, size=None):
+    print('select sql----------------------')
     log(sql, args)
     
     global __pool
@@ -43,13 +44,14 @@ async def select(sql, args, size=None):
                 rs = await cur.fetchmany(size)
             else:
                 rs = await cur.fetchall()
-        logging.info('rows returned: %s' % len(rs))
-    # 如果不关闭__pool，就会报异常：Exception ignored in: <bound method Connection.__del__ of <aiomysql.connection.Connection objec>>
-    __pool.close() # close()is not a coroutine, If you want to wait for actual closing of acquired connection please call wait_closed() after close().
-    await __pool.wait_closed()
+    logging.info('rows returned: %s' % len(rs))
+    # # 如果不关闭__pool，就会报异常：Exception ignored in: <bound method Connection.__del__ of <aiomysql.connection.Connection objec>>
+    # __pool.close() # close()is not a coroutine, If you want to wait for actual closing of acquired connection please call wait_closed() after close().
+    # await __pool.wait_closed()
     return rs
 
 async def execute(sql, args, autocommit=True):
+    print('execute sql----------------------')
     log(sql)
     async with __pool.get() as conn:
         if not autocommit:
@@ -63,11 +65,11 @@ async def execute(sql, args, autocommit=True):
         except BaseException as e:
             if not autocommit:
                 await conn.rollback() # 出现提交事务异常时恢复原始数据
-            raise
-    # 如果不关闭__pool，就会报异常：Exception ignored in: <bound method Connection.__del__ of <aiomysql.connection.Connection objec>>
-    __pool.close() # close()is not a coroutine, If you want to wait for actual closing of acquired connection please call wait_closed() after close().
-    await __pool.wait_closed()
-    return affected # 返回被执行的数据记录条数
+            raise e
+    # # 如果不关闭__pool，就会报异常：Exception ignored in: <bound method Connection.__del__ of <aiomysql.connection.Connection objec>>
+    # __pool.close() # close()is not a coroutine, If you want to wait for actual closing of acquired connection please call wait_closed() after close().
+    # await __pool.wait_closed()
+            return affected # 返回被执行的数据记录条数
 
 def create_args_string(num):
     L = []

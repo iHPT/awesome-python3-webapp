@@ -172,11 +172,11 @@ async def response_factory(app, handler):
     return response
 
 async def init(loop):
-    await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='123456', db='test_db')
+    await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='123456', db='awesome')
     app = web.Application(loop=loop, middlewares=[logger_factory, response_factory])
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     # add_routes导入模块名，调用add_route，内部app.router.add_route创建RequestHandler实例
-    add_routes(app, 'test_view') # module_name为独立模块名，或带.的模块名的子模块
+    add_routes(app, 'handlers') # module_name为独立模块名，或带.的模块名的子模块
     add_static(app)
     srv = await loop.create_server(app.make_handler(), '127.0.0.1', 9000) # 当向服务器发出请求时，会进行中间层middlewares函数调用，并调用RequestHandler实例__call__函数，进行处理
     logging.info('server started at http://127.0.0.1:9000...')

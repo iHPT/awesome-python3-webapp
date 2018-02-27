@@ -33,7 +33,7 @@ def merge(defaults, override):
     for k, v in defaults.items():
         if k in override:
             # 如果v为字典，无法进行直接赋值，则回调
-            if isinstance(k, dict):
+            if isinstance(v, dict):
                 r[k] = merge(v, override[k])
             # v为字符串或整型类数据，可直接赋值
             else:
@@ -56,3 +56,5 @@ try:
     configs = merge(configs, config_override.configs)
 except ImportError:
     pass
+
+configs = toDict(configs) # 可使用点语法configs.db

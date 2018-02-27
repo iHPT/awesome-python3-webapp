@@ -14,6 +14,8 @@ from datetime import datetime
 from aiohttp import web
 from jinja2 import Environment, FileSystemLoader
 
+from config import configs
+
 import orm
 from coroweb import add_routes, add_static
 
@@ -172,7 +174,8 @@ async def response_factory(app, handler):
     return response
 
 async def init(loop):
-    await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='123456', db='awesome')
+    #await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='123456', db='awesome')
+    await orm.create_pool(loop=loop, **configs['database']) # 导入config配置文件，连接数据库
     app = web.Application(loop=loop, middlewares=[logger_factory, response_factory])
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     # add_routes导入模块名，调用add_route，内部app.router.add_route创建RequestHandler实例

@@ -15,9 +15,9 @@ from models import User, Blog
 tom = User(email='57937554@qq.com', passwd='232434', admin=True, name='Tom')
 lily = User(id='00154235346346aljfdlsjfldsjfld', email='32434354@qq.com', passwd='565231', name='Lily')
 
-@get('/')
+@get('/users')
 async def index(request):
-    print('test_view.py--/')
+    print('test_view.py--/users')
     # await User.saveItem(tom)
     # await User.saveItem(lily)
     users = await User.findAll()
@@ -33,9 +33,9 @@ async def index(request):
 #     print('test_view.py--/')
 #     return b'<h1>Awesome</h1>'
 
-@get('/hello')
+@get('/blogs')
 async def hello(request):
-    print('test_view.py--/hello')
+    print('test_view.py--/blogs')
     summary = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
     blogs = [
         Blog(id='1', name='Test Blog', summary=summary, created_at=time.time() - 120),
@@ -47,9 +47,11 @@ async def hello(request):
         'blogs': blogs
     }
 
-@get('/world')
-async def world(request):
-    print('test_view.py--/world')
-    return 'world!'
-
+@get('/api/users')
+async def api_get_users():
+    print('test_view.py--/api/users')
+    users = await User.findAll()
+    for user in users:
+        user.passwd = '123456'
+    return dict(users=users)
 

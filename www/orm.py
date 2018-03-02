@@ -44,6 +44,7 @@ async def select(sql, args, size=None):
                 rs = await cur.fetchmany(size)
             else:
                 rs = await cur.fetchall()
+            await cur.close()
     logging.info('rows returned: %s' % len(rs))
     # # 如果不关闭__pool，就会报异常：Exception ignored in: <bound method Connection.__del__ of <aiomysql.connection.Connection objec>>
     # __pool.close() # close()is not a coroutine, If you want to wait for actual closing of acquired connection please call wait_closed() after close().
@@ -60,6 +61,7 @@ async def execute(sql, args, autocommit=True):
             async with conn.cursor(aiomysql.DictCursor) as cur:
                 await cur.execute(sql.replace('?', '%s'), args)
                 affected = cur.rowcount
+                await cur.close()
             if not autocommit:
                 await conn.commit() # 手动提交事务
         except BaseException as e:
@@ -69,7 +71,7 @@ async def execute(sql, args, autocommit=True):
     # # 如果不关闭__pool，就会报异常：Exception ignored in: <bound method Connection.__del__ of <aiomysql.connection.Connection objec>>
     # __pool.close() # close()is not a coroutine, If you want to wait for actual closing of acquired connection please call wait_closed() after close().
     # await __pool.wait_closed()
-            return affected # 返回被执行的数据记录条数
+        return affected # 返回被执行的数据记录条数
 
 def create_args_string(num):
     L = []

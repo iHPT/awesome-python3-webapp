@@ -19,6 +19,7 @@ from config import configs
 import orm
 from coroweb import add_routes, add_static
 
+from handlers import cookie2user, COOKIE_NAME
 
 '''
 初始化jinja2需要以下几步：
@@ -89,10 +90,28 @@ web框架正是由一层层middleware的封装，才具备各种完善的功能�
 # handler是视图函数
 async def logger_factory(app, handler):
     async def logger(request):
-        logging.info('Request: %s %s' % (request.method, request.path))
+        logging.info('logger_factory---Request: %s %s' % (request.method, request.path))
         # await asyncio.sleep(1)
         return (await handler(request))
     return logger
+
+# auth_factory使用async/await 会出现object generator can't be used in 'await' expression错误
+async def auth_factory(app, handler):
+    async def auth(request):
+        logging.info('auth_factory--check user: %s %s' % (request.method, request.path))
+        request.__user__ = None
+        cookie_str = request.cookies.get(COOKIE_NAME)
+        print('auth_factory-----', cookie_str)
+        if cookie_str:
+            user = await cookie2user(cookie_str)
+            print('auth_factory----', user)
+            if user:
+                logging.info('set current user: %s' % user.email)
+                request.__user__ = user
+        if request.path.startswith('/manage/') and (request.__user__ is None or not request.__user__.admin):
+            return web.HTTPFound('signin')
+        return (await handler(request))
+    return auth
 
 async def data_factory(app, handler):
     async def parse_data(request):
@@ -115,7 +134,7 @@ async def data_factory(app, handler):
 # 3、response_factory对处理后的对象，经过一系列类型判断，构造出真正的web.Response对象
 async def response_factory(app, handler):
     async def response(request):
-        logging.info('Response handler...')
+        logging.info('response_factory...')
         r = await handler(request) # 调用RequestHandler.__call__，对参数进行处理
         if isinstance(r, web.StreamResponse): # StreamResponse是所有Response对象的父类
             print('response "StreamResponse"')
@@ -151,6 +170,7 @@ async def response_factory(app, handler):
             else: # 带模板信息，渲染模板
                 # app['__templating__']获取已初始化的Environment对象，调用get_template()方法返回Template对象  
                 # 调用Template对象的render()方法，传入r渲染模板，返回unicode格式字符串，将其用utf-8编码
+                r['__user__'] = request.__user__
                 resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'))
                 resp.content_type = 'text/html;charset=utf-8' # utf-8编码的html格式
                 print('resp =', resp)
@@ -176,7 +196,7 @@ async def response_factory(app, handler):
 async def init(loop):
     #await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='123456', db='awesome')
     await orm.create_pool(loop=loop, **configs['database']) # 导入config配置文件，连接数据库
-    app = web.Application(loop=loop, middlewares=[logger_factory, response_factory])
+    app = web.Application(loop=loop, middlewares=[logger_factory, auth_factory, response_factory])
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     # add_routes导入模块名，调用add_route，内部app.router.add_route创建RequestHandler实例
     add_routes(app, 'handlers') # module_name为独立模块名，或带.的模块名的子模块

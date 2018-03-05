@@ -23,7 +23,7 @@ class User(Model):
     name = StringField(ddl='VARCHAR(50)')
     image = StringField(ddl='VARCHAR(500)')
     created_at = FloatField(default=time.time)
-    def __init__(self, email, passwd, name, id=next_id(), admin=False, image='favicon.ico', created_at=time.time()):
+    def __init__(self, email, passwd, name, id=next_id(), admin=True, image='favicon.ico', created_at=time.time()):
         self.id = id
         self.email = email
         self.passwd = passwd
